@@ -17,17 +17,13 @@ Configuration
 
 Edit variables inside nginxctl script.
 
->   # pidfile location
-> PIDFILE=/var/run/nginx.pid
+> PIDFILE=/var/run/nginx.pid      # pidfile location
 
->   # nginx binary location
-> NGINX=/usr/local/sbin/nginx
+> NGINX=/usr/local/sbin/nginx     # nginx binary location
 
->   # Browser for text dump of statistic request
-> LYNX="lynx -dump"
+> LYNX="lynx -dump"               # Browser for text dump
 
->   # URL for nginx statistic
-> STATUSURL="http://127.0.0.1:999/stub_status"
+> STATUSURL="http://127.0.0.1:999/stub_status" # URL for nginx statistic
 
 For statistic add some lines into nginx.conf. For our example:
 ```
