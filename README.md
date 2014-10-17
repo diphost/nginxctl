@@ -83,3 +83,11 @@ TODO
 2. Implement reopen logs function.
 3. Alter implementation restart command. Do it hardly.
 4. Implement graceful stop command.
+
+Applied
+-------
+
+Used and tested on the resources of 
+* PeterHost.ru hosting
+* DreamLess Systems (http://diphost.ru/)
+* eFind.ru
