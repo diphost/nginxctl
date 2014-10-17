@@ -1,0 +1,174 @@
+#!/bin/sh
+
+# nginxctl - a lightweight clone of apachectl script. It act as a SysV init
+# script, taking simple one-word arguments like start, restart, and stop,
+# and translating them into appropriate signals to nginx.
+
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#                    Version 2, December 2004
+#
+# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+#
+# Everyone is permitted to copy and distribute verbatim or modified
+# copies of this license document, and changing it is allowed as long
+# as the name is changed.
+#
+#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+#
+#  0. You just DO WHAT THE FUCK YOU WANT TO.
+
+# The exit codes returned are:
+#	0 - operation completed successfully
+#	1 - 
+#	2 - usage error
+#	3 - nginx could not be started
+#	4 - nginx could not be stopped
+#	5 - nginx could not be started during a restart
+#	6 - nginx could not be restarted during a restart
+#	7 - nginx could not be restarted during a graceful restart
+#	8 - configuration syntax error
+#
+# When multiple arguments are given, only the error from the _last_
+# one is reported.  Run "nginxctl help" for usage info
+#
+
+PIDFILE=/var/run/nginx.pid
+NGINX=/usr/local/sbin/nginx
+LYNX="lynx -dump"
+STATUSURL="http://127.0.0.1:999/stub_status"
+
+eval `limits -e -C daemon` >/dev/null 2>&1
+
+ERROR=0
+ARGV="$@"
+if [ "x$ARGV" = "x" ] ; then 
+    ARGS="help"
+fi
+
+for ARG in $@ $ARGS
+do
+    # check for pidfile
+    if [ -f $PIDFILE ] ; then
+	PID=`cat $PIDFILE`
+	if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
+	    STATUS="nginx (pid $PID) running"
+	    RUNNING=1
+	else
+	    STATUS="nginx (pid $PID?) not running"
+	    RUNNING=0
+	fi
+    else
+	STATUS="nginx (no pid file) not running"
+	RUNNING=0
+    fi
+
+    case $ARG in
+    start)
+	if [ $RUNNING -eq 1 ]; then
+	    echo "$0 $ARG: nginx(pid $PID) already running"
+	    continue
+	fi
+	if $NGINX ; then
+	    echo "$0 $ARG: nginx started"
+	else
+	    echo "$0 $ARG: nginx could not be started"
+	    ERROR=3
+	fi
+	;;
+    stop)
+	if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: $STATUS"
+	    continue
+	fi
+	if kill $PID ; then
+	    echo "$0 $ARG: nginx stopped"
+	else
+	    echo "$0 $ARG: nginx could not be stopped"
+	    ERROR=4
+	fi
+	;;
+    restart)
+	if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: nginx not running, trying to start"
+	    if $NGINX ; then
+		echo "$0 $ARG: nginx started"
+	    else
+		echo "$0 $ARG: nginx could not be started"
+		ERROR=5
+	    fi
+	else
+	    if $NGINX -t >/dev/null 2>&1; then
+		if kill -HUP $PID ; then
+		    echo "$0 $ARG: nginx restarted"
+		else
+		    echo "$0 $ARG: nginx could not be restarted"
+		    ERROR=6
+		fi
+	    else
+		echo "$0 $ARG: configuration broken, ignoring restart"
+		echo "$0 $ARG: (run 'nginxctl configtest' for details)"
+		ERROR=6
+	    fi
+	fi
+	;;
+    graceful)
+	if [ $RUNNING -eq 0 ]; then
+	    echo "$0 $ARG: nginx not running, trying to start"
+	    if $NGINX ; then
+		echo "$0 $ARG: nginx started"
+	    else
+		echo "$0 $ARG: nginx could not be started"
+		ERROR=5
+	    fi
+	else
+	    if $NGINX -t >/dev/null 2>&1; then
+		if kill -HUP $PID ; then
+		    echo "$0 $ARG: nginx gracefully restarted"
+		else
+		    echo "$0 $ARG: nginx could not be restarted"
+		    ERROR=7
+		fi
+	    else
+		echo "$0 $ARG: configuration broken, ignoring restart"
+		echo "$0 $ARG: (run 'nginxctl configtest' for details)"
+		ERROR=7
+	    fi
+	fi
+	;;
+    status)
+	$LYNX $STATUSURL # | awk ' /process$/ { print; exit } { print } '
+	;;
+    fullstatus)
+	$LYNX $STATUSURL
+	;;
+    configtest)
+	if $NGINX -t; then
+	    :
+	else
+	    ERROR=8
+	fi
+	;;
+    *)
+	echo "usage: $0 (start|stop|restart|fullstatus|status|graceful|configtest|help)"
+	cat <<EOF
+
+start      - start nginx
+stop       - stop nginx
+restart    - restart nginx if running by sending a SIGHUP or start if 
+             not running
+fullstatus - dump a full status screen; requires lynx and 'stub_status on;' directive
+status     - dump a short status screen; requires lynx and 'stub_status on;' directive
+graceful   - do a graceful restart by sending a SIGHUP or start if not running
+configtest - do a configuration syntax test
+help       - this screen
+
+EOF
+	ERROR=2
+    ;;
+
+    esac
+
+done
+
+exit $ERROR
