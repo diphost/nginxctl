@@ -17,16 +17,18 @@ Configuration
 
 Edit variables inside nginxctl script.
 
-> PIDFILE=/var/run/nginx.pid      # pidfile location
+```shell
+PIDFILE=/var/run/nginx.pid      # pidfile location
 
-> NGINX=/usr/local/sbin/nginx     # nginx binary location
+NGINX=/usr/local/sbin/nginx     # nginx binary location
 
-> LYNX="lynx -dump"               # Browser for text dump
+LYNX="lynx -dump"               # Browser for text dump
 
-> STATUSURL="http://127.0.0.1:999/stub_status" # URL for nginx statistic
+STATUSURL="http://127.0.0.1:999/stub_status" # URL for nginx statistic
+```
 
 For statistic add some lines into nginx.conf. For our example:
-```
+```nginx
     server {
         listen          127.0.0.1:999;
         server_name     localhost;
@@ -67,15 +69,6 @@ The exit codes returned are:
 * 7 - nginx could not be restarted during a graceful restart
 * 8 - configuration syntax error
 
-
-Donate
-------
-
-**For Nuts, please.**
-
-* **PayPal**: schors@gmail.com
-* **Yandex.Money**: 41001140237324
-
 TODO
 ----
 
@@ -89,5 +82,9 @@ Applied
 
 Used and tested on the resources of 
 * PeterHost.ru hosting
-* DreamLess Systems (http://diphost.ru/)
+* [DiPHOST](http://diphost.ru/)
 * eFind.ru
+
+--
+[![LICENSE WTFPL](wtfpl-badge-1.png)](LICENSE)
+
